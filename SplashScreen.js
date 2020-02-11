@@ -12,9 +12,15 @@ import {
 const SplashScreenModule = NativeModules.SplashScreen;
 
 export default class SplashScreen {
+    /**add by david at 2020-2-11 */
+    //清除租户id
+    static cleanEnterpriseId() {
+        SplashScreenModule.cleanEnterpriseId()
+    }
+    /**add by david at 2020-2-11 */
 
-    static loadLaunchScreenImage(start_url, icon_url) {
-        SplashScreenModule.loadLaunchScreenImage(start_url, icon_url);
+    static loadLaunchScreenImage(start_url, icon_url, id) {
+        SplashScreenModule.loadLaunchScreenImage(start_url, icon_url, id);
     }
     static close(param) {
         SplashScreenModule.close(param);

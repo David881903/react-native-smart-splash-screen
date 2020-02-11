@@ -3,6 +3,7 @@ package com.reactnativecomponent.splashscreen;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
@@ -28,12 +29,15 @@ import androidx.core.content.PermissionChecker;
 
 
 public class RCTSplashScreenModule extends ReactContextBaseJavaModule {
-    public static String ImgPath_start = null;
-    public static String ImgPath_icon = null;
+    public static String ImgPath_start = "";
+    public static String ImgPath_icon = "";
 
     public static int CODE = 11000;
     public static String Url_start = "";
     public static String Url_icon = "";
+
+    public static String Enterprise = "Enterprise";
+    public static String EnterpriseId = "EnterpriseId";
 
     public RCTSplashScreenModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -73,22 +77,43 @@ public class RCTSplashScreenModule extends ReactContextBaseJavaModule {
     }
 
     public static void getImgPath(Context context) {
-        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            RCTSplashScreenModule.ImgPath_start = context.getExternalFilesDir(null).getAbsolutePath() + "/mg_open_image.png";
-            RCTSplashScreenModule.ImgPath_icon = context.getExternalFilesDir(null).getAbsolutePath() + "/mg_open_icon.png";
+        /**
+         * 添加EnterpriseId
+         *
+         */
+        String id = getEnterpriseId(context);
+        if (id != "") {
+            //检查sd卡是否可用
+            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                RCTSplashScreenModule.ImgPath_start = context.getExternalFilesDir(null).getAbsolutePath() + "/" + id + "/mg_open_image.png";
+                RCTSplashScreenModule.ImgPath_icon = context.getExternalFilesDir(null).getAbsolutePath() + "/" + id + "/mg_open_icon.png";
+            } else {
+                RCTSplashScreenModule.ImgPath_start = context.getFilesDir().getAbsolutePath() + "/" + id + "/mg_open_image.png";
+                RCTSplashScreenModule.ImgPath_icon = context.getFilesDir().getAbsolutePath() + "/" + id + "/mg_open_icon.png";
+            }
 
         } else {
-            RCTSplashScreenModule.ImgPath_start = context.getFilesDir().getAbsolutePath() + "/mg_open_image.png";
-            RCTSplashScreenModule.ImgPath_icon = context.getFilesDir().getAbsolutePath() + "/mg_open_icon.png";
-
+            RCTSplashScreenModule.ImgPath_start = "";
+            RCTSplashScreenModule.ImgPath_icon = "";
         }
+//        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+//            RCTSplashScreenModule.ImgPath_start = context.getExternalFilesDir(null).getAbsolutePath() + "/mg_open_image.png";
+//            RCTSplashScreenModule.ImgPath_icon = context.getExternalFilesDir(null).getAbsolutePath() + "/mg_open_icon.png";
+//
+//        } else {
+//            RCTSplashScreenModule.ImgPath_start = context.getFilesDir().getAbsolutePath() + "/mg_open_image.png";
+//            RCTSplashScreenModule.ImgPath_icon = context.getFilesDir().getAbsolutePath() + "/mg_open_icon.png";
+//
+//        }
     }
 
     /**
      * 图片下载方法
      */
     @ReactMethod
-    public void loadLaunchScreenImage(String start_url, String icon_url) {
+    public void loadLaunchScreenImage(String start_url, String icon_url, String id) {
+        setEnterpriseId(id);
+        getImgPath(getReactApplicationContext());
         Url_start = start_url;
         Url_icon = icon_url;
 
@@ -116,6 +141,27 @@ public class RCTSplashScreenModule extends ReactContextBaseJavaModule {
     }
 
     /**
+     * 清空id
+     */
+    @ReactMethod
+    public void cleanEnterpriseId() {
+        setEnterpriseId("");
+    }
+
+    public void setEnterpriseId(String id) {
+        SharedPreferences sharedPreferences = getCurrentActivity().getSharedPreferences(Enterprise, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(EnterpriseId, id);
+        editor.commit();
+    }
+
+    public static String getEnterpriseId(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(Enterprise, Context.MODE_PRIVATE);
+        String userId = sharedPreferences.getString(EnterpriseId, "");
+        return userId;
+    }
+
+    /**
      * 保存到本地
      *
      * @param bitmap
@@ -130,6 +176,12 @@ public class RCTSplashScreenModule extends ReactContextBaseJavaModule {
             if (type == 2) {
                 ImgPath = ImgPath_icon;
             }
+            int index = ImgPath.lastIndexOf("/");
+            File file = new File(ImgPath.substring(0, index));
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+
             fos = new FileOutputStream(ImgPath);//picPath为保存SD卡路径
             if (fos != null) {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);

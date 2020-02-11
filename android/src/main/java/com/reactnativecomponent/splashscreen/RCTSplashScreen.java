@@ -52,6 +52,9 @@ public class RCTSplashScreen {
 
     public static boolean checkFileExists(String start_url, String icon_url) {
         boolean file_exists = false;
+        if (RCTSplashScreenModule.ImgPath_start == "" || RCTSplashScreenModule.ImgPath_icon == "") {
+            return false;
+        }
         boolean start = new File(RCTSplashScreenModule.ImgPath_start).exists();
         boolean file_icon = new File(RCTSplashScreenModule.ImgPath_icon).exists();
         if (start) {
